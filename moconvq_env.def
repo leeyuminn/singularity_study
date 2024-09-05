@@ -1,0 +1,78 @@
+BootStrap: docker
+From: nvcr.io/nvidia/pytorch:22.08-py3  # PyTorch 2.0.1, CUDA 11.8 기반 이미지
+
+%post
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    # 필수 패키지 설치
+    apt-get update && apt-get install -y \
+        git \
+        wget \
+        cmake \
+        curl \
+        build-essential \
+        libopenmpi-dev \
+        python3-pip \
+        && rm -rf /var/lib/apt/lists/*
+
+    # 필요한 Python 패키지 설치
+    pip install --upgrade pip
+
+    # 요구 사항에 맞는 Python 패키지 설치
+    pip install \
+        tensorboardx \
+        opt_einsum \
+        numba \
+        numpy \
+        psutil \
+        pyyaml \
+        mpi4py \
+        einops==0.6.0 \
+        h5py==3.8.0 \
+        matplotlib==3.7.1 \
+        scikit-learn==1.2.2 \
+        scipy==1.10.1 \
+        tqdm==4.65.0 \
+        setuptools==58.2.0
+
+    # llvmlite 설치 문제 해결을 위해 강제 재설치
+    # pip install --ignore-installed llvmlite==0.36.0
+
+    # PyTorch 및 CUDA는 이미지에 포함됨
+
+    # CUDA NVCC 12.4.131 설치
+    apt-get install -y cuda-nvcc-12-4
+
+    # MoConVQ 레포지토리를 현재 경로에 클론 (GitHub에서 가져옴)
+    git clone https://github.com/heyuanYao-pku/MoConVQ.git
+
+    # diff-quaternion의 rotation library 설치
+    cd MoConVQ/diff-quaternion/TorchRotation/
+    pip install -e .
+    cd ..
+
+    # VclSimuBackend 빌드
+    cd MoConVQ/ModifyODESrc
+    ./clear.cmd
+    pip install -e .
+    cd ..
+
+    # moconvq core 빌드
+    pip install -e .
+
+# 환경변수 지정
+%environment
+    export NVIDIA_VISIBLE_DEVICES=all
+    export NVIDIA_DRIVER_CAPABILITIES=all
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=Asia/Seoul
+
+# 기본적으로 실행되는 명령어
+%runscript
+    echo "Singularity container for moconvq"
+    exec "$@"
+
+%labels
+    Author yumin
+    Version v0.0.0
