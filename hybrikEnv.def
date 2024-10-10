@@ -1,0 +1,39 @@
+Bootstrap: library
+From: ubuntu:22.04
+
+%post
+    # Update package list and install necessary dependencies
+    apt-get update && apt-get install -y --no-install-recommends \
+        wget \
+        curl \
+        git \
+        bzip2 \
+        ca-certificates \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
+        unzip \
+        mpv
+
+    # Clean up APT when done to free space
+    apt-get clean
+
+
+    # Install Miniconda
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+    bash /tmp/miniconda.sh -b -p /opt/conda
+    rm /tmp/miniconda.sh
+    /opt/conda/bin/conda init bash
+
+%environment
+    # Set environment variables for conda
+    export PATH="/opt/conda/bin:$PATH"
+
+%runscript
+    # Command to run when the container starts
+    echo "Singularity container started. Conda is installed at /opt/conda."
+    echo "To set up the environment, use 'source /opt/conda/bin/activate' and create your environment with 'conda create -n hybrik python=3.8'."
